@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Community Resource Finder</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="script.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Community Resource Finder</h1>
+      <p>Find local food banks, clinics, shelters, and more.</p>
+    </header>
+
+    <main>
+      <section id="filter-section">
+        <label for="category-filter">Filter by category:</label>
+        <select id="category-filter">
+          <option value="">All categories</option>
+          <option value="food bank">Food Bank</option>
+          <option value="clinic">Clinic</option>
+          <option value="shelter">Shelter</option>
+          <option value="other">Other</option>
+        </select>
+      </section>
+
+      <section id="resource-list">
+        <!-- Resource cards get inserted here by script.js -->
+        <p id="loading-message">Loading resources...</p>
+      </section>
+
+      <section id="add-resource-section">
+        <h2>Add a New Resource</h2>
+        <form id="resource-form">
+          <input type="text" id="name" placeholder="Name" required />
+          <select id="category" required>
+            <option value="">Select category</option>
+            <option value="food bank">Food Bank</option>
+            <option value="clinic">Clinic</option>
+            <option value="shelter">Shelter</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="text" id="address" placeholder="Address" required />
+          <input type="text" id="phone" placeholder="Phone (optional)" />
+          <input type="text" id="hours" placeholder="Hours (optional)" />
+          <textarea id="notes" placeholder="Notes (optional)"></textarea>
+          <button type="submit">Add Resource</button>
+        </form>
+        <p id="form-message"></p>
+      </section>
+    </main>
+  </body>
+</html>

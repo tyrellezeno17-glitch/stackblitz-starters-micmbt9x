@@ -1,0 +1,115 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: #222;
+}
+
+header {
+  background: #2c5f2d;
+  color: white;
+  padding: 24px;
+  text-align: center;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+#filter-section {
+  margin-bottom: 20px;
+}
+
+#filter-section select {
+  padding: 8px;
+  margin-left: 8px;
+}
+
+#resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.resource-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.resource-card h3 {
+  margin-top: 0;
+  color: #2c5f2d;
+}
+
+.resource-card .category-tag {
+  display: inline-block;
+  background: #e0f0e0;
+  color: #2c5f2d;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin-bottom: 8px;
+}
+
+.delete-btn {
+  background: #c0392b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.delete-btn:hover {
+  background: #922b21;
+}
+
+#add-resource-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+#resource-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#resource-form input,
+#resource-form select,
+#resource-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+#resource-form button {
+  background: #2c5f2d;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+#resource-form button:hover {
+  background: #234b24;
+}
+
+#form-message {
+  font-weight: bold;
+}
