@@ -54,9 +54,72 @@
         <div id="logged-in-view" style="display: none;">
           <div class="logged-in-row">
             <div>
-              <p class="muted small-label">Signed in</p>
+              <p class="small-label">Signed In</p>
               <p class="signed-in-text">
                 <span id="user-email"></span>
                 <span id="admin-badge" class="admin-badge" style="display: none;">Admin</span>
               </p>
-            </
+            </div>
+
+            <button id="logout-btn" class="secondary-danger-btn" type="button">
+              Log Out
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="filter-section" class="panel filter-panel" style="display: none;">
+        <div>
+          <p class="small-label">Browse Resources</p>
+          <h2>Available Community Resources</h2>
+        </div>
+
+        <div class="filter-control">
+          <label for="category-filter">Filter by category</label>
+          <select id="category-filter">
+            <option value="">All categories</option>
+            <option value="food bank">Food Bank</option>
+            <option value="clinic">Clinic</option>
+            <option value="shelter">Shelter</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </section>
+
+      <section id="resource-list" class="resource-list">
+        <p class="empty-state">Please log in or sign up to view resources.</p>
+      </section>
+
+      <section id="add-resource-section" class="panel admin-panel" style="display: none;">
+        <div class="section-heading">
+          <p class="small-label">Admin Tools</p>
+          <h2>Add a New Resource</h2>
+          <p class="muted">
+            Add verified community resources for users to browse.
+          </p>
+        </div>
+
+        <form id="resource-form" class="resource-form">
+          <input type="text" id="name" placeholder="Resource name" required />
+
+          <select id="category" required>
+            <option value="">Select category</option>
+            <option value="food bank">Food Bank</option>
+            <option value="clinic">Clinic</option>
+            <option value="shelter">Shelter</option>
+            <option value="other">Other</option>
+          </select>
+
+          <input type="text" id="address" placeholder="Address" required />
+          <input type="text" id="phone" placeholder="Phone optional" />
+          <input type="text" id="hours" placeholder="Hours optional" />
+          <textarea id="notes" placeholder="Notes optional"></textarea>
+
+          <button type="submit">Add Resource</button>
+        </form>
+
+        <p id="form-message" class="message"></p>
+      </section>
+    </main>
+  </body>
+</html>
