@@ -1,5 +1,5 @@
-const API_URL = 'https://community-resource-api-8no4.orender.com/api/resources';
-const AUth_URL = 'https'= 'https://community-resource-api-8no4.onrender.com/api';
+const API_URL = 'https://community-resource-api-8no4.onrender.com/api/resources';
+const AUTH_URL = 'https://community-resource-api-8no4.onrender.com/api';
 
 const resourceList = document.getElementById('resource-list');
 const categoryFilter = document.getElementById('category-filter');
