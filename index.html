@@ -14,6 +14,27 @@
     </header>
 
     <main>
+      <section id="auth-section">
+        <div id="logged-out-view">
+          <h2>Login or Sign Up to Add Resources</h2>
+          <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Password" required />
+            <button type="submit">Log In</button>
+          </form>
+          <form id="signup-form">
+            <input type="email" id="signup-email" placeholder="Email" required />
+            <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required />
+            <button type="submit">Sign Up</button>
+          </form>
+          <p id="auth-message"></p>
+        </div>
+
+        <div id="logged-in-view" style="display: none;">
+          <p>Logged in as <span id="user-email"></span> <button id="logout-btn">Log Out</button></p>
+        </div>
+      </section>
+
       <section id="filter-section">
         <label for="category-filter">Filter by category:</label>
         <select id="category-filter">
@@ -26,11 +47,10 @@
       </section>
 
       <section id="resource-list">
-        <!-- Resource cards get inserted here by script.js -->
         <p id="loading-message">Loading resources...</p>
       </section>
 
-      <section id="add-resource-section">
+      <section id="add-resource-section" style="display: none;">
         <h2>Add a New Resource</h2>
         <form id="resource-form">
           <input type="text" id="name" placeholder="Name" required />

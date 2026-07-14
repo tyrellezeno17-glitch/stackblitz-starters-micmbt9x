@@ -1,236 +1,323 @@
-require('dotenv').config();
+const API_URL = 'https://community-resource-api-8no4.onrender.com/api/resources';
+const AUTH_URL = 'https://community-resource-api-8no4.onrender.com/api';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const resourceList = document.getElementById('resource-list');
+const categoryFilter = document.getElementById('category-filter');
+const resourceForm = document.getElementById('resource-form');
+const formMessage = document.getElementById('form-message');
 
-const Resource = require('./models/Resource');
-const User = require('./models/User');
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+const authMessage = document.getElementById('auth-message');
+const loggedOutView = document.getElementById('logged-out-view');
+const loggedInView = document.getElementById('logged-in-view');
+const userEmailSpan = document.getElementById('user-email');
+const logoutBtn = document.getElementById('logout-btn');
+const addResourceSection = document.getElementById('add-resource-section');
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-app.get('/', (req, res) => {
-  res.send('Community Resource Finder API is running!');
-});
-
-function createToken(userId) {
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+function getToken() {
+  return localStorage.getItem('token');
 }
 
-async function requireAuth(req, res, next) {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.userId = decoded.userId;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+function userIsAdmin() {
+  return localStorage.getItem('isAdmin') === 'true';
 }
 
-async function requireAdmin(req, res, next) {
-  try {
-    const user = await User.findById(req.userId);
+function clearSession() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('email');
+  localStorage.removeItem('isAdmin');
+}
 
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+function updateAuthUI() {
+  const token = getToken();
+  const email = localStorage.getItem('email');
+  const isAdmin = userIsAdmin();
+
+  if (token) {
+    loggedOutView.style.display = 'none';
+    loggedInView.style.display = 'block';
+    userEmailSpan.textContent = email || '';
+
+    if (isAdmin) {
+      addResourceSection.style.display = 'block';
+    } else {
+      addResourceSection.style.display = 'none';
     }
-
-    if (user.email !== process.env.ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    next();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+  } else {
+    loggedOutView.style.display = 'block';
+    loggedInView.style.display = 'none';
+    addResourceSection.style.display = 'none';
+    userEmailSpan.textContent = '';
+    resourceList.innerHTML = '<p>Please log in or sign up to view resources.</p>';
   }
 }
 
-app.post('/api/signup', async (req, res) => {
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    const normalizedEmail = email.toLowerCase();
-
-    const existingUser = await User.findOne({ email: normalizedEmail });
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      email: normalizedEmail,
-      password: hashedPassword
+    const response = await fetch(`${AUTH_URL}/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
     });
 
-    await newUser.save();
+    const data = await response.json();
 
-    const token = createToken(newUser._id);
-    const isAdmin = newUser.email === process.env.ADMIN_EMAIL;
+    if (!response.ok) {
+      throw new Error(data.error || 'Signup failed');
+    }
 
-    res.status(201).json({
-      token,
-      email: newUser.email,
-      isAdmin
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('email', data.email);
+    localStorage.setItem('isAdmin', String(data.isAdmin));
+
+    authMessage.textContent = '';
+    signupForm.reset();
+
+    updateAuthUI();
+    loadResources();
+  } catch (err) {
+    authMessage.textContent = err.message;
+  }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const response = await fetch(`${AUTH_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('email', data.email);
+    localStorage.setItem('isAdmin', String(data.isAdmin));
+
+    authMessage.textContent = '';
+    loginForm.reset();
+
+    updateAuthUI();
+    loadResources();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    authMessage.textContent = err.message;
   }
 });
 
-app.post('/api/login', async (req, res) => {
+logoutBtn.addEventListener('click', () => {
+  clearSession();
+  updateAuthUI();
+});
+
+async function loadResources(category = '') {
+  const token = getToken();
+
+  if (!token) {
+    resourceList.innerHTML = '<p>Please log in or sign up to view resources.</p>';
+    return;
+  }
+
+  resourceList.innerHTML = '<p>Loading resources...</p>';
+
   try {
-    const { email, password } = req.body;
+    const url = category
+      ? `${API_URL}?category=${encodeURIComponent(category)}`
+      : API_URL;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    const normalizedEmail = email.toLowerCase();
-
-    const user = await User.findOne({ email: normalizedEmail });
-
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const passwordMatches = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatches) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const token = createToken(user._id);
-    const isAdmin = user.email === process.env.ADMIN_EMAIL;
-
-    res.json({
-      token,
-      email: user.email,
-      isAdmin
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
-app.get('/api/me', requireAuth, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select('email');
+    const data = await response.json();
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (response.status === 401) {
+      clearSession();
+      updateAuthUI();
+      resourceList.innerHTML = '<p>Your session expired. Please log in again.</p>';
+      return;
     }
 
-    res.json({
-      email: user.email,
-      isAdmin: user.email === process.env.ADMIN_EMAIL
+    if (!response.ok) {
+      throw new Error(data.error || 'Error loading resources');
+    }
+
+    const resources = data;
+
+    if (resources.length === 0) {
+      resourceList.innerHTML = '<p>No resources found.</p>';
+      return;
+    }
+
+    resourceList.innerHTML = '';
+
+    resources.forEach((resource) => {
+      const card = document.createElement('div');
+      card.className = 'resource-card';
+
+      card.innerHTML = `
+        <span class="category-tag">${resource.category}</span>
+        <h3>${resource.name}</h3>
+        <p><strong>Address:</strong> ${resource.address}</p>
+        ${resource.phone ? `<p><strong>Phone:</strong> ${resource.phone}</p>` : ''}
+        ${resource.hours ? `<p><strong>Hours:</strong> ${resource.hours}</p>` : ''}
+        ${resource.notes ? `<p><strong>Notes:</strong> ${resource.notes}</p>` : ''}
+        ${
+          userIsAdmin()
+            ? `<button class="delete-btn" data-id="${resource._id}">Delete</button>`
+            : ''
+        }
+      `;
+
+      resourceList.appendChild(card);
     });
+
+    if (userIsAdmin()) {
+      attachDeleteHandlers();
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    resourceList.innerHTML =
+      '<p>Error loading resources. The server may be waking up — try again in a moment.</p>';
+    console.error(err);
   }
+}
+
+function attachDeleteHandlers() {
+  document.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.getAttribute('data-id');
+      const token = getToken();
+
+      const confirmDelete = confirm('Are you sure you want to delete this resource?');
+
+      if (!confirmDelete) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+          clearSession();
+          updateAuthUI();
+          alert('Your session expired. Please log in again.');
+          return;
+        }
+
+        if (response.status === 403) {
+          alert('Only the admin can delete resources.');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete resource');
+        }
+
+        loadResources(categoryFilter.value);
+      } catch (err) {
+        alert('Error deleting resource. Please try again.');
+        console.error(err);
+      }
+    });
+  });
+}
+
+categoryFilter.addEventListener('change', () => {
+  loadResources(categoryFilter.value);
 });
 
-app.get('/api/resources', requireAuth, async (req, res) => {
-  try {
-    const filter = req.query.category ? { category: req.query.category } : {};
-    const resources = await Resource.find(filter).sort({ createdAt: -1 });
+resourceForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    res.json(resources);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  const token = getToken();
+
+  if (!token) {
+    formMessage.textContent = 'Please log in first.';
+    return;
   }
-});
 
-app.get('/api/resources/:id', requireAuth, async (req, res) => {
+  if (!userIsAdmin()) {
+    formMessage.textContent = 'Only the admin can add resources.';
+    return;
+  }
+
+  formMessage.textContent = 'Submitting...';
+
+  const newResource = {
+    name: document.getElementById('name').value,
+    category: document.getElementById('category').value,
+    address: document.getElementById('address').value,
+    phone: document.getElementById('phone').value,
+    hours: document.getElementById('hours').value,
+    notes: document.getElementById('notes').value
+  };
+
   try {
-    const resource = await Resource.findById(req.params.id);
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(newResource)
+    });
 
-    if (!resource) {
-      return res.status(404).json({ error: 'Resource not found' });
+    const data = await response.json();
+
+    if (response.status === 401) {
+      formMessage.textContent = 'Your session expired. Please log in again.';
+      clearSession();
+      updateAuthUI();
+      return;
     }
 
-    res.json(resource);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/resources', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const newResource = new Resource(req.body);
-    const saved = await newResource.save();
-
-    res.status(201).json(saved);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.put('/api/resources/:id', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const updated = await Resource.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ error: 'Resource not found' });
+    if (response.status === 403) {
+      formMessage.textContent = 'Only the admin can add resources.';
+      return;
     }
 
-    res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.delete('/api/resources/:id', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const deleted = await Resource.findByIdAndDelete(req.params.id);
-
-    if (!deleted) {
-      return res.status(404).json({ error: 'Resource not found' });
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to add resource');
     }
 
-    res.json({ message: 'Resource deleted' });
+    formMessage.textContent = 'Resource added!';
+    resourceForm.reset();
+    loadResources(categoryFilter.value);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    formMessage.textContent = 'Error adding resource. Please try again.';
+    console.error(err);
   }
 });
 
-const PORT = process.env.PORT || 5000;
+updateAuthUI();
 
-app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
-});
+if (getToken()) {
+  loadResources();
+}
