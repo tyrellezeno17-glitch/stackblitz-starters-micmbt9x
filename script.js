@@ -14,6 +14,7 @@ const loggedInView = document.getElementById('logged-in-view');
 const userEmailSpan = document.getElementById('user-email');
 const logoutBtn = document.getElementById('logout-btn');
 const addResourceSection = document.getElementById('add-resource-section');
+const adminBadge = document.getElementById('admin-badge');
 
 function getToken() {
   return localStorage.getItem('token');
@@ -35,108 +36,124 @@ function updateAuthUI() {
   const isAdmin = userIsAdmin();
 
   if (token) {
-    loggedOutView.style.display = 'none';
-    loggedInView.style.display = 'block';
-    userEmailSpan.textContent = email || '';
+    if (loggedOutView) loggedOutView.style.display = 'none';
+    if (loggedInView) loggedInView.style.display = 'block';
+    if (userEmailSpan) userEmailSpan.textContent = email || '';
 
-    if (isAdmin) {
-      addResourceSection.style.display = 'block';
-    } else {
-      addResourceSection.style.display = 'none';
+    if (addResourceSection) {
+      addResourceSection.style.display = isAdmin ? 'block' : 'none';
+    }
+
+    if (adminBadge) {
+      adminBadge.style.display = isAdmin ? 'inline-block' : 'none';
     }
   } else {
-    loggedOutView.style.display = 'block';
-    loggedInView.style.display = 'none';
-    addResourceSection.style.display = 'none';
-    userEmailSpan.textContent = '';
-    resourceList.innerHTML = '<p>Please log in or sign up to view resources.</p>';
+    if (loggedOutView) loggedOutView.style.display = 'block';
+    if (loggedInView) loggedInView.style.display = 'none';
+    if (addResourceSection) addResourceSection.style.display = 'none';
+    if (userEmailSpan) userEmailSpan.textContent = '';
+    if (adminBadge) adminBadge.style.display = 'none';
+
+    if (resourceList) {
+      resourceList.innerHTML =
+        '<p class="empty-state">Please log in or sign up to view resources.</p>';
+    }
   }
 }
 
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+if (signupForm) {
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const email = document.getElementById('signup-email').value;
-  const password = document.getElementById('signup-password').value;
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
 
-  try {
-    const response = await fetch(`${AUTH_URL}/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const response = await fetch(`${AUTH_URL}/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Signup failed');
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed');
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('email', data.email);
+      localStorage.setItem('isAdmin', String(data.isAdmin));
+
+      if (authMessage) authMessage.textContent = '';
+      signupForm.reset();
+
+      updateAuthUI();
+      loadResources();
+    } catch (err) {
+      if (authMessage) authMessage.textContent = err.message;
     }
+  });
+}
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('email', data.email);
-    localStorage.setItem('isAdmin', String(data.isAdmin));
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    authMessage.textContent = '';
-    signupForm.reset();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
 
-    updateAuthUI();
-    loadResources();
-  } catch (err) {
-    authMessage.textContent = err.message;
-  }
-});
+    try {
+      const response = await fetch(`${AUTH_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+      const data = await response.json();
 
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
 
-  try {
-    const response = await fetch(`${AUTH_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('email', data.email);
+      localStorage.setItem('isAdmin', String(data.isAdmin));
 
-    const data = await response.json();
+      if (authMessage) authMessage.textContent = '';
+      loginForm.reset();
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
+      updateAuthUI();
+      loadResources();
+    } catch (err) {
+      if (authMessage) authMessage.textContent = err.message;
     }
+  });
+}
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('email', data.email);
-    localStorage.setItem('isAdmin', String(data.isAdmin));
-
-    authMessage.textContent = '';
-    loginForm.reset();
-
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    clearSession();
     updateAuthUI();
-    loadResources();
-  } catch (err) {
-    authMessage.textContent = err.message;
-  }
-});
-
-logoutBtn.addEventListener('click', () => {
-  clearSession();
-  updateAuthUI();
-});
+  });
+}
 
 async function loadResources(category = '') {
   const token = getToken();
 
+  if (!resourceList) return;
+
   if (!token) {
-    resourceList.innerHTML = '<p>Please log in or sign up to view resources.</p>';
+    resourceList.innerHTML =
+      '<p class="empty-state">Please log in or sign up to view resources.</p>';
     return;
   }
 
-  resourceList.innerHTML = '<p>Loading resources...</p>';
+  resourceList.innerHTML = '<p class="empty-state">Loading resources...</p>';
 
   try {
     const url = category
@@ -154,7 +171,8 @@ async function loadResources(category = '') {
     if (response.status === 401) {
       clearSession();
       updateAuthUI();
-      resourceList.innerHTML = '<p>Your session expired. Please log in again.</p>';
+      resourceList.innerHTML =
+        '<p class="empty-state">Your session expired. Please log in again.</p>';
       return;
     }
 
@@ -165,7 +183,7 @@ async function loadResources(category = '') {
     const resources = data;
 
     if (resources.length === 0) {
-      resourceList.innerHTML = '<p>No resources found.</p>';
+      resourceList.innerHTML = '<p class="empty-state">No resources found.</p>';
       return;
     }
 
@@ -197,7 +215,7 @@ async function loadResources(category = '') {
     }
   } catch (err) {
     resourceList.innerHTML =
-      '<p>Error loading resources. The server may be waking up — try again in a moment.</p>';
+      '<p class="empty-state">Error loading resources. The server may be waking up — try again in a moment.</p>';
     console.error(err);
   }
 }
@@ -240,7 +258,8 @@ function attachDeleteHandlers() {
           throw new Error(data.error || 'Failed to delete resource');
         }
 
-        loadResources(categoryFilter.value);
+        const selectedCategory = categoryFilter ? categoryFilter.value : '';
+        loadResources(selectedCategory);
       } catch (err) {
         alert('Error deleting resource. Please try again.');
         console.error(err);
@@ -249,72 +268,78 @@ function attachDeleteHandlers() {
   });
 }
 
-categoryFilter.addEventListener('change', () => {
-  loadResources(categoryFilter.value);
-});
-
-resourceForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const token = getToken();
-
-  if (!token) {
-    formMessage.textContent = 'Please log in first.';
-    return;
-  }
-
-  if (!userIsAdmin()) {
-    formMessage.textContent = 'Only the admin can add resources.';
-    return;
-  }
-
-  formMessage.textContent = 'Submitting...';
-
-  const newResource = {
-    name: document.getElementById('name').value,
-    category: document.getElementById('category').value,
-    address: document.getElementById('address').value,
-    phone: document.getElementById('phone').value,
-    hours: document.getElementById('hours').value,
-    notes: document.getElementById('notes').value
-  };
-
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(newResource)
-    });
-
-    const data = await response.json();
-
-    if (response.status === 401) {
-      formMessage.textContent = 'Your session expired. Please log in again.';
-      clearSession();
-      updateAuthUI();
-      return;
-    }
-
-    if (response.status === 403) {
-      formMessage.textContent = 'Only the admin can add resources.';
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to add resource');
-    }
-
-    formMessage.textContent = 'Resource added!';
-    resourceForm.reset();
+if (categoryFilter) {
+  categoryFilter.addEventListener('change', () => {
     loadResources(categoryFilter.value);
-  } catch (err) {
-    formMessage.textContent = 'Error adding resource. Please try again.';
-    console.error(err);
-  }
-});
+  });
+}
+
+if (resourceForm) {
+  resourceForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const token = getToken();
+
+    if (!token) {
+      if (formMessage) formMessage.textContent = 'Please log in first.';
+      return;
+    }
+
+    if (!userIsAdmin()) {
+      if (formMessage) formMessage.textContent = 'Only the admin can add resources.';
+      return;
+    }
+
+    if (formMessage) formMessage.textContent = 'Submitting...';
+
+    const newResource = {
+      name: document.getElementById('name').value,
+      category: document.getElementById('category').value,
+      address: document.getElementById('address').value,
+      phone: document.getElementById('phone').value,
+      hours: document.getElementById('hours').value,
+      notes: document.getElementById('notes').value
+    };
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newResource)
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        if (formMessage) formMessage.textContent = 'Your session expired. Please log in again.';
+        clearSession();
+        updateAuthUI();
+        return;
+      }
+
+      if (response.status === 403) {
+        if (formMessage) formMessage.textContent = 'Only the admin can add resources.';
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add resource');
+      }
+
+      if (formMessage) formMessage.textContent = 'Resource added!';
+      resourceForm.reset();
+
+      const selectedCategory = categoryFilter ? categoryFilter.value : '';
+      loadResources(selectedCategory);
+    } catch (err) {
+      if (formMessage) formMessage.textContent = 'Error adding resource. Please try again.';
+      console.error(err);
+    }
+  });
+}
 
 updateAuthUI();
 
