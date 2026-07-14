@@ -7,68 +7,56 @@
     <link rel="stylesheet" href="styles.css" />
     <script type="module" src="script.js"></script>
   </head>
+
   <body>
-    <header>
-      <h1>Community Resource Finder</h1>
-      <p>Find local food banks, clinics, shelters, and more.</p>
+    <header class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Verified Local Support</p>
+        <h1>Community Resource Finder</h1>
+        <p class="hero-subtitle">
+          Find local food banks, clinics, shelters, and other helpful community resources.
+        </p>
+      </div>
     </header>
 
-    <main>
-      <section id="auth-section">
+    <main class="page-shell">
+      <section id="auth-section" class="panel auth-panel">
         <div id="logged-out-view">
           <h2>Login or Sign Up to View Resources</h2>
-          <form id="login-form">
-            <input type="email" id="login-email" placeholder="Email" required />
-            <input type="password" id="login-password" placeholder="Password" required />
-            <button type="submit">Log In</button>
-          </form>
-          <form id="signup-form">
-            <input type="email" id="signup-email" placeholder="Email" required />
-            <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required />
-            <button type="submit">Sign Up</button>
-          </form>
-          <p id="auth-message"></p>
+          <p class="muted">
+            Create a free account to browse community resources. Resource management is restricted to the site admin.
+          </p>
+
+          <div class="auth-grid">
+            <form id="login-form" class="auth-form">
+              <h3>Log In</h3>
+              <input type="email" id="login-email" placeholder="Email" required />
+              <input type="password" id="login-password" placeholder="Password" required />
+              <button type="submit">Log In</button>
+            </form>
+
+            <form id="signup-form" class="auth-form">
+              <h3>Sign Up</h3>
+              <input type="email" id="signup-email" placeholder="Email" required />
+              <input
+                type="password"
+                id="signup-password"
+                placeholder="Password minimum 6 characters"
+                required
+              />
+              <button type="submit">Create Account</button>
+            </form>
+          </div>
+
+          <p id="auth-message" class="message error-message"></p>
         </div>
 
         <div id="logged-in-view" style="display: none;">
-          <p>Logged in as <span id="user-email"></span> <button id="logout-btn">Log Out</button></p>
-        </div>
-      </section>
-
-      <section id="filter-section">
-        <label for="category-filter">Filter by category:</label>
-        <select id="category-filter">
-          <option value="">All categories</option>
-          <option value="food bank">Food Bank</option>
-          <option value="clinic">Clinic</option>
-          <option value="shelter">Shelter</option>
-          <option value="other">Other</option>
-        </select>
-      </section>
-
-      <section id="resource-list">
-        <p id="loading-message">Loading resources...</p>
-      </section>
-
-      <section id="add-resource-section" style="display: none;">
-        <h2>Add a New Resource</h2>
-        <form id="resource-form">
-          <input type="text" id="name" placeholder="Name" required />
-          <select id="category" required>
-            <option value="">Select category</option>
-            <option value="food bank">Food Bank</option>
-            <option value="clinic">Clinic</option>
-            <option value="shelter">Shelter</option>
-            <option value="other">Other</option>
-          </select>
-          <input type="text" id="address" placeholder="Address" required />
-          <input type="text" id="phone" placeholder="Phone (optional)" />
-          <input type="text" id="hours" placeholder="Hours (optional)" />
-          <textarea id="notes" placeholder="Notes (optional)"></textarea>
-          <button type="submit">Add Resource</button>
-        </form>
-        <p id="form-message"></p>
-      </section>
-    </main>
-  </body>
-</html>
+          <div class="logged-in-row">
+            <div>
+              <p class="muted small-label">Signed in</p>
+              <p class="signed-in-text">
+                <span id="user-email"></span>
+                <span id="admin-badge" class="admin-badge" style="display: none;">Admin</span>
+              </p>
+            </

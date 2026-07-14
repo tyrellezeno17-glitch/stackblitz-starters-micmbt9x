@@ -1,3 +1,4 @@
+<span id="admin-badge" class="admin-badge" style="display: none;">Admin</span>
 const API_URL = 'https://community-resource-api-8no4.onrender.com/api/resources';
 const AUTH_URL = 'https://community-resource-api-8no4.onrender.com/api';
 
@@ -41,15 +42,18 @@ function updateAuthUI() {
 
     if (isAdmin) {
       addResourceSection.style.display = 'block';
+      adminBadge.style.display = 'inline-block';
     } else {
       addResourceSection.style.display = 'none';
+      adminBadge.style.display = 'none';
     }
   } else {
     loggedOutView.style.display = 'block';
     loggedInView.style.display = 'none';
     addResourceSection.style.display = 'none';
     userEmailSpan.textContent = '';
-    resourceList.innerHTML = '<p>Please log in or sign up to view resources.</p>';
+    adminBadge.style.display = 'none';
+    resourceList.innerHTML = '<p class="empty-state">Please log in or sign up to view resources.</p>';
   }
 }
 
